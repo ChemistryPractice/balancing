@@ -4,75 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chemistry Equation Balancer</title>
+    
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-            svg: { fontCache: 'global' }
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            },
+            options: {
+                processHtmlClass: 'mathjax-process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('MathJax is ready');
+                    MathJax.startup.defaultReady();
+                }
+            }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/bundle/tex-mml-chtml.js"></script>
+    
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/bundle/tex-mml-chtml.js"></script>
     
     <style>
         :root {
             --primary: #2c3e50; --secondary: #34495e; --accent: #3498db;
             --success: #27ae60; --warning: #e67e22; --bg: #f8f9fa;
         }
-
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-
-        /* Sidebar */
-        #sidebar {
-            width: 260px; background: var(--primary); color: white;
-            padding: 20px; display: flex; flex-direction: column; gap: 15px;
-        }
-        .side-btn {
-            background: var(--secondary); color: white; border: none;
-            padding: 12px; cursor: pointer; border-radius: 6px; text-align: left;
-            transition: 0.2s; font-size: 0.95rem;
-        }
+        #sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .side-btn { background: var(--secondary); color: white; border: none; padding: 12px; cursor: pointer; border-radius: 6px; text-align: left; transition: 0.2s; }
         .side-btn:hover { background: var(--accent); }
         .side-btn.active { background: var(--accent); font-weight: bold; border-left: 4px solid white; }
-
-        /* Main Area */
         #main { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; }
-        .card {
-            background: white; padding: 40px; border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center;
-        }
-
-        #type-badge {
-            display: inline-block; padding: 5px 15px; border-radius: 20px;
-            background: #ebf5ff; color: var(--accent); font-weight: bold;
-            font-size: 0.8rem; margin-bottom: 20px; text-transform: uppercase;
-        }
-
-        #display-box {
-            font-size: 2.2rem; min-height: 140px; display: flex;
-            align-items: center; justify-content: center; margin: 20px 0;
-            border: 2px solid #f0f0f0; border-radius: 10px; padding: 20px;
-        }
-
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 850px; text-align: center; }
+        #type-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; background: #ebf5ff; color: var(--accent); font-weight: bold; font-size: 0.8rem; margin-bottom: 20px; text-transform: uppercase; }
+        #display-box { font-size: 2.2rem; min-height: 140px; display: flex; align-items: center; justify-content: center; margin: 20px 0; border: 2px solid #f0f0f0; border-radius: 10px; padding: 20px; }
         .btn-row { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
-        .main-btn {
-            padding: 15px 35px; border: none; border-radius: 8px;
-            cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.2s;
-        }
+        .main-btn { padding: 15px 35px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.2s; }
         #gen-btn { background: var(--success); color: white; }
         #check-btn { background: var(--warning); color: white; }
-        .main-btn:active { transform: translateY(2px); }
-
-        #answer-box {
-            margin-top: 30px; padding: 25px; background: #f0fdf4;
-            border: 2px solid var(--success); border-radius: 10px; display: none;
-        }
-        .ans-label { color: var(--success); font-weight: bold; margin-bottom: 10px; display: block; }
+        #answer-box { margin-top: 30px; padding: 25px; background: #f0fdf4; border: 2px solid var(--success); border-radius: 10px; display: none; }
         #ans-text { font-size: 2rem; }
-
-        /* PT Overlay */
-        #pt-overlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            z-index: 100; justify-content: center; align-items: center;
-        }
+        #pt-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center; }
         #pt-frame { width: 90%; height: 85%; background: white; position: relative; border-radius: 10px; overflow: hidden; }
         #close-pt { position: absolute; top: 10px; right: 20px; font-size: 2rem; cursor: pointer; color: #333; z-index: 101; border:none; background:none; }
     </style>
@@ -81,10 +54,8 @@
 
 <div id="sidebar">
     <h2 style="margin-top:0">Equation Master</h2>
-    <p style="font-size: 0.8rem; opacity: 0.8;">Select practice mode:</p>
     <button class="side-btn active" onclick="setMode('formula', this)">Formula Equations</button>
     <button class="side-btn" onclick="setMode('word', this)">Word Equations</button>
-    
     <div style="margin-top: auto;">
         <button class="side-btn" style="width:100%; text-align:center;" onclick="togglePT(true)">Periodic Table</button>
     </div>
@@ -93,7 +64,7 @@
 <div id="main">
     <div class="card">
         <div id="type-badge">Ready?</div>
-        <div id="display-box">Select "New Equation" to begin practice.</div>
+        <div id="display-box" class="mathjax-process">Select "New Equation" to begin.</div>
         
         <div class="btn-row">
             <button id="gen-btn" class="main-btn" onclick="generateNew()">New Equation</button>
@@ -101,8 +72,8 @@
         </div>
 
         <div id="answer-box">
-            <span class="ans-label">Balanced Solution:</span>
-            <div id="ans-text"></div>
+            <span style="color:var(--success); font-weight:bold;">Balanced Solution:</span>
+            <div id="ans-text" class="mathjax-process"></div>
         </div>
     </div>
 </div>
@@ -243,30 +214,35 @@
         renderDisplay();
     }
 
-    function renderDisplay() {
+    // This is the core fix: A robust rendering function
+    async function renderDisplay() {
         const box = document.getElementById('display-box');
-        const badge = document.getElementById('type-badge');
-        badge.innerText = "Type: " + activeEq.t;
+        document.getElementById('type-badge').innerText = "Type: " + activeEq.t;
         
         if (currentMode === 'word') {
             box.innerHTML = activeEq.w;
         } else {
-            box.innerHTML = `\\( ${activeEq.f} \\)`;
-            // Crucial: Tell MathJax to process the box
-            MathJax.typesetPromise([box]);
+            // Use double $$ for better detection
+            box.innerHTML = `$$ ${activeEq.f} $$`;
+            
+            // Wait for MathJax to be ready, then trigger re-typeset
+            if (window.MathJax && MathJax.typesetPromise) {
+                await MathJax.typesetPromise([box]);
+            }
         }
     }
 
-    function showAnswer() {
+    async function showAnswer() {
         if (!activeEq) return;
         const ansBox = document.getElementById('answer-box');
         const ansText = document.getElementById('ans-text');
         
         ansBox.style.display = 'block';
-        ansText.innerHTML = `\\( ${activeEq.b} \\)`;
+        ansText.innerHTML = `$$ ${activeEq.b} $$`;
         
-        // Crucial: Tell MathJax to process the answer
-        MathJax.typesetPromise([ansText]);
+        if (window.MathJax && MathJax.typesetPromise) {
+            await MathJax.typesetPromise([ansText]);
+        }
     }
 
     function togglePT(show) {
