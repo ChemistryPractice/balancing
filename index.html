@@ -53,9 +53,9 @@
     let mode = 'formula';
     let current = null;
 
+    // This is named 'bank'
     const bank = [
-        // SYNTHESIS (20)
-        { t: "Synthesis", w: "Magnesium + Oxygen → Magnesium Oxide", f: "Mg + O_2 \\rightarrow MgO", b: "2Mg + O_2 \\rightarrow 2MgO" },
+        { t: "Synthesis", w: "Magnesium + Oxygen → Magnesium Oxide", f: "2Mg + O_2 \\rightarrow 2MgO", b: "2Mg + O_2 \\rightarrow 2MgO" },
         { t: "Synthesis", w: "Sodium + Chlorine → Sodium Chloride", f: "Na + Cl_2 \\rightarrow NaCl", b: "2Na + Cl_2 \\rightarrow 2NaCl" },
         { t: "Synthesis", w: "Aluminum + Oxygen → Aluminum Oxide", f: "Al + O_2 \\rightarrow Al_2O_3", b: "4Al + 3O_2 \\rightarrow 2Al_2O_3" },
         { t: "Synthesis", w: "Hydrogen + Nitrogen → Ammonia", f: "H_2 + N_2 \\rightarrow NH_3", b: "3H_2 + N_2 \\rightarrow 2NH_3" },
@@ -75,8 +75,6 @@
         { t: "Synthesis", w: "Magnesium + Nitrogen → Magnesium Nitride", f: "Mg + N_2 \\rightarrow Mg_3N_2", b: "3Mg + N_2 \\rightarrow Mg_3N_2" },
         { t: "Synthesis", w: "Hydrogen + Chlorine → Hydrogen Chloride", f: "H_2 + Cl_2 \\rightarrow HCl", b: "H_2 + Cl_2 \\rightarrow 2HCl" },
         { t: "Synthesis", w: "Boron + Fluorine → Boron Trifluoride", f: "B + F_2 \\rightarrow BF_3", b: "2B + 3F_2 \\rightarrow 2BF_3" },
-
-        // DECOMPOSITION (20)
         { t: "Decomposition", w: "Water → Hydrogen + Oxygen", f: "H_2O \\rightarrow H_2 + O_2", b: "2H_2O \\rightarrow 2H_2 + O_2" },
         { t: "Decomposition", w: "Mercury(II) Oxide → Mercury + Oxygen", f: "HgO \\rightarrow Hg + O_2", b: "2HgO \\rightarrow 2Hg + O_2" },
         { t: "Decomposition", w: "Calcium Carbonate → Calcium Oxide + Carbon Dioxide", f: "CaCO_3 \\rightarrow CaO + CO_2", b: "CaCO_3 \\rightarrow CaO + CO_2" },
@@ -97,11 +95,9 @@
         { t: "Decomposition", w: "Sodium Nitrate → Sodium Nitrite + Oxygen", f: "NaNO_3 \\rightarrow NaNO_2 + O_2", b: "2NaNO_3 \\rightarrow 2NaNO_2 + O_2" },
         { t: "Decomposition", w: "Dinitrogen Pentoxide → Nitrogen Dioxide + Oxygen", f: "N_2O_5 \\rightarrow NO_2 + O_2", b: "2N_2O_5 \\rightarrow 4NO_2 + O_2" },
         { t: "Decomposition", w: "Iron(III) Hydroxide → Iron(III) Oxide + Water", f: "Fe(OH)_3 \\rightarrow Fe_2O_3 + H_2O", b: "2Fe(OH)_3 \\rightarrow Fe_2O_3 + 3H_2O" },
-
-        // SINGLE REPLACEMENT (20)
         { t: "Single Replacement", w: "Zinc + Hydrochloric Acid → Zinc Chloride + Hydrogen", f: "Zn + HCl \\rightarrow ZnCl_2 + H_2", b: "Zn + 2HCl \\rightarrow ZnCl_2 + H_2" },
         { t: "Single Replacement", w: "Magnesium + Silver Nitrate → Magnesium Nitrate + Silver", f: "Mg + AgNO_3 \\rightarrow Mg(NO_3)_2 + Ag", b: "Mg + 2AgNO_3 \\rightarrow Mg(NO_3)_2 + 2Ag" },
-        { t: "Single Replacement", w: "Aluminum + Copper(II) Chloride → Aluminum Chloride + Copper", f: "Al + CuCl_2 \\rightarrow AlCl_3 + Cu", b: "2Al + 3CuCl_2 \\rightarrow 2AlCl_3 + 3Cu" },
+        { t: "Single Replacement", w: "Aluminum + Copper(II) Chloride → Aluminum Chloride + Copper", f: "Al + CuCl_2 \\rightarrow AlCl_3 + Copper", b: "2Al + 3CuCl_2 \\rightarrow 2AlCl_3 + 3Cu" },
         { t: "Single Replacement", w: "Sodium + Water → Sodium Hydroxide + Hydrogen", f: "Na + H_2O \\rightarrow NaOH + H_2", b: "2Na + 2H_2O \\rightarrow 2NaOH + H_2" },
         { t: "Single Replacement", w: "Chlorine + Potassium Bromide → Potassium Chloride + Bromine", f: "Cl_2 + KBr \\rightarrow KCl + Br_2", b: "Cl_2 + 2KBr \\rightarrow 2KCl + Br_2" },
         { t: "Single Replacement", w: "Iron + Copper(II) Sulfate → Iron(II) Sulfate + Copper", f: "Fe + CuSO_4 \\rightarrow FeSO_4 + Cu", b: "Fe + CuSO_4 \\rightarrow FeSO_4 + Cu" },
@@ -119,8 +115,6 @@
         { t: "Single Replacement", w: "Chlorine + Sodium Iodide → Sodium Chloride + Iodine", f: "Cl_2 + NaI \\rightarrow NaCl + I_2", b: "Cl_2 + 2NaI \\rightarrow 2NaCl + I_2" },
         { t: "Single Replacement", w: "Calcium + Hydrochloric Acid → Calcium Chloride + Hydrogen", f: "Ca + HCl \\rightarrow CaCl_2 + H_2", b: "Ca + 2HCl \\rightarrow CaCl_2 + H_2" },
         { t: "Single Replacement", w: "Zinc + Copper(II) Nitrate → Zinc Nitrate + Copper", f: "Zn + Cu(NO_3)_2 \\rightarrow Zn(NO_3)_2 + Cu", b: "Zn + Cu(NO_3)_2 \\rightarrow Zn(NO_3)_2 + Cu" },
-
-        // DOUBLE REPLACEMENT (20)
         { t: "Double Replacement", w: "Silver Nitrate + Sodium Chloride → Silver Chloride + Sodium Nitrate", f: "AgNO_3 + NaCl \\rightarrow AgCl + NaNO_3", b: "AgNO_3 + NaCl \\rightarrow AgCl + NaNO_3" },
         { t: "Double Replacement", w: "Barium Chloride + Sodium Sulfate → Barium Sulfate + Sodium Chloride", f: "BaCl_2 + Na_2SO_4 \\rightarrow BaSO_4 + NaCl", b: "BaCl_2 + Na_2SO_4 \\rightarrow BaSO_4 + 2NaCl" },
         { t: "Double Replacement", w: "Lead(II) Nitrate + Potassium Iodide → Lead(II) Iodide + Potassium Nitrate", f: "Pb(NO_3)_2 + KI \\rightarrow PbI_2 + KNO_3", b: "Pb(NO_3)_2 + 2KI \\rightarrow PbI_2 + 2KNO_3" },
@@ -141,8 +135,6 @@
         { t: "Double Replacement", w: "Copper(II) Sulfate + Sodium Carbonate → Copper(II) Carbonate + Sodium Sulfate", f: "CuSO_4 + Na_2CO_3 \\rightarrow CuCO_3 + Na_2SO_4", b: "CuSO_4 + Na_2CO_3 \\rightarrow CuCO_3 + Na_2SO_4" },
         { t: "Double Replacement", w: "Zinc Sulfate + Lithium Phosphate → Lithium Sulfate + Zinc Phosphate", f: "ZnSO_4 + Li_3PO_4 \\rightarrow Li_2SO_4 + Zn_3(PO_4)_2", b: "3ZnSO_4 + 2Li_3PO_4 \\rightarrow 3Li_2SO_4 + Zn_3(PO_4)_2" },
         { t: "Double Replacement", w: "Potassium Hydroxide + Phosphoric Acid → Potassium Phosphate + Water", f: "KOH + H_3PO_4 \\rightarrow K_3PO_4 + H_2O", b: "3KOH + H_3PO_4 \\rightarrow K_3PO_4 + 3H_2O" },
-
-        // COMBUSTION (20)
         { t: "Combustion", w: "Methane + Oxygen → Carbon Dioxide + Water", f: "CH_4 + O_2 \\rightarrow CO_2 + H_2O", b: "CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O" },
         { t: "Combustion", w: "Propane + Oxygen → Carbon Dioxide + Water", f: "C_3H_8 + O_2 \\rightarrow CO_2 + H_2O", b: "C_3H_8 + 5O_2 \\rightarrow 3CO_2 + 4H_2O" },
         { t: "Combustion", w: "Ethanol + Oxygen → Carbon Dioxide + Water", f: "C_2H_5OH + O_2 \\rightarrow CO_2 + H_2O", b: "C_2H_5OH + 3O_2 \\rightarrow 2CO_2 + 3H_2O" },
@@ -165,7 +157,7 @@
         { t: "Combustion", w: "Ether + Oxygen → Carbon Dioxide + Water", f: "C_4H_{10}O + O_2 \\rightarrow CO_2 + H_2O", b: "C_4H_{10}O + 6O_2 \\rightarrow 4CO_2 + 5H_2O" }
     ];
 
-   function setMode(m) {
+    function setMode(m) {
         mode = m;
         document.getElementById('mode-f').classList.toggle('active', m === 'formula');
         document.getElementById('mode-w').classList.toggle('active', m === 'word');
@@ -173,7 +165,8 @@
     }
 
     function nextQuestion() {
-        current = equations[Math.floor(Math.random() * equations.length)];
+        // FIXED: changed 'equations' to 'bank'
+        current = bank[Math.floor(Math.random() * bank.length)];
         document.getElementById('answer-box').style.display = 'none';
         render();
     }
@@ -185,7 +178,6 @@
         if (mode === 'word') {
             display.innerHTML = current.w;
         } else {
-            // KaTeX render: Simple and instantaneous
             katex.render(current.f, display, { throwOnError: false, displayMode: true });
         }
     }
@@ -195,8 +187,6 @@
         const ansBox = document.getElementById('answer-box');
         const ansText = document.getElementById('ans-text');
         ansBox.style.display = 'block';
-        
-        // KaTeX render for the answer
         katex.render(current.b, ansText, { throwOnError: false, displayMode: true });
     }
 </script>
