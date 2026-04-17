@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Equation Balancer</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/bundle/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-light: #ecf0f1;
+            --bg-color: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+        }
+
+        /* Sidebar Styling */
+        #sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        #sidebar h2 {
+            font-size: 1.2rem;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .side-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: left;
+            transition: background 0.3s;
+        }
+
+        .side-btn:hover {
+            background: var(--accent-color);
+        }
+
+        .side-btn.active {
+            background: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Main Content Styling */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        #reaction-type {
+            color: var(--accent-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        #display-area {
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        #gen-btn { background: #27ae60; color: white; }
+        #check-btn { background: #e67e22; color: white; }
+        .action-btn:active { transform: scale(0.98); }
+
+        #answer-reveal {
+            margin-top: 25px;
+            padding: 20px;
+            background: #e8f4fd;
+            border-radius: 8px;
+            display: none;
+            font-size: 1.5rem;
+        }
+
+        /* Periodic Table Overlay */
+        #pt-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #pt-container {
+            width: 90%;
+            height: 90%;
+            background: white;
+            position: relative;
+        }
+
+        #close-pt {
+            position: absolute;
+            top: 10px; right: 10px;
+            padding: 10px;
+            cursor: pointer;
+            background: #c0392b;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>Practice Mode</h2>
+    <button class="side-btn active" onclick="setMode('formula', this)">Formula Equations</button>
+    <button class="side-btn" onclick="setMode('word', this)">Word Equations</button>
+    
+    <div style="margin-top: auto;">
+        <button class="side-btn" onclick="togglePT(true)">Periodic Table</button>
+    </div>
+</div>
+
+<div id="main-content">
+    <div class="container">
+        <div id="reaction-type">Select "New Equation" to Start</div>
+        <div id="display-area">
+            Click the button below to generate a reaction.
+        </div>
+
+        <div class="controls">
+            <button id="gen-btn" class="action-btn" onclick="generateNew()">New Equation</button>
+            <button id="check-btn" class="action-btn" onclick="revealAnswer()">Check Answer</button>
+        </div>
+
+        <div id="answer-reveal">
+            <strong>Balanced Equation:</strong>
+            <div id="balanced-formula"></div>
+        </div>
+    </div>
+</div>
+
+<div id="pt-overlay">
+    <div id="pt-container">
+        <button id="close-pt" onclick="togglePT(false)">Close [X]</button>
+        <iframe src="https://www.ptable.com/?embed" width="100%" height="100%" frameborder="0"></iframe>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'formula';
+    let currentEquation = null;
+
+    const equationBank = [
+        // SYNTHESIS (20)
+        { type: "Synthesis", word: "Magnesium + Oxygen → Magnesium Oxide", formula: "Mg + O_2 \\rightarrow MgO", balanced: "2Mg + O_2 \\rightarrow 2MgO" },
+        { type: "Synthesis", word: "Sodium + Chlorine → Sodium Chloride", formula: "Na + Cl_2 \\rightarrow NaCl", balanced: "2Na + Cl_2 \\rightarrow 2NaCl" },
+        { type: "Synthesis", word: "Hydrogen + Oxygen → Water", formula: "H_2 + O_2 \\rightarrow H_2O", balanced: "2H_2 + O_2 \\rightarrow 2H_2O" },
+        { type: "Synthesis", word: "Aluminum + Oxygen → Aluminum Oxide", formula: "Al + O_2 \\rightarrow Al_2O_3", balanced: "4Al + 3O_2 \\rightarrow 2Al_2O_3" },
+        { type: "Synthesis", word: "Potassium + Iodine → Potassium Iodide", formula: "K + I_2 \\rightarrow KI", balanced: "2K + I_2 \\rightarrow 2KI" },
+        { type: "Synthesis", word: "Nitrogen + Hydrogen → Ammonia", formula: "N_2 + H_2 \\rightarrow NH_3", balanced: "N_2 + 3H_2 \\rightarrow 2NH_3" },
+        { type: "Synthesis", word: "Iron + Oxygen → Iron(III) Oxide", formula: "Fe + O_2 \\rightarrow Fe_2O_3", balanced: "4Fe + 3O_2 \\rightarrow 2Fe_2O_3" },
+        { type: "Synthesis", word: "Sulfur + Oxygen → Sulfur Dioxide", formula: "S + O_2 \\rightarrow SO_2", balanced: "S + O_2 \\rightarrow SO_2" },
+        { type: "Synthesis", word: "Calcium + Nitrogen → Calcium Nitride", formula: "Ca + N_2 \\rightarrow Ca_3N_2", balanced: "3Ca + N_2 \\rightarrow Ca_3N_2" },
+        { type: "Synthesis", word: "Phosphorus + Chlorine → Phosphorus Trichloride", formula: "P_4 + Cl_2 \\rightarrow PCl_3", balanced: "P_4 + 6Cl_2 \\rightarrow 4PCl_3" },
+        { type: "Synthesis", word: "Lithium + Nitrogen → Lithium Nitride", formula: "Li + N_2 \\rightarrow Li_3N", balanced: "6Li + N_2 \\rightarrow 2Li_3N" },
+        { type: "Synthesis", word: "Carbon + Oxygen → Carbon Monoxide", formula: "C + O_2 \\rightarrow CO", balanced: "2C + O_2 \\rightarrow 2CO" },
+        { type: "Synthesis", word: "Barium + Oxygen → Barium Oxide", formula: "Ba + O_2 \\rightarrow BaO", balanced: "2Ba + O_2 \\rightarrow 2BaO" },
+        { type: "Synthesis", word: "Boron + Fluorine → Boron Trifluoride", formula: "B + F_2 \\rightarrow BF_3", balanced: "2B + 3F_2 \\rightarrow 2BF_3" },
+        { type: "Synthesis", word: "Zinc + Sulfur → Zinc Sulfide", formula: "Zn + S \\rightarrow ZnS", balanced: "Zn + S \\rightarrow ZnS" },
+        { type: "Synthesis", word: "Hydrogen + Chlorine → Hydrogen Chloride", formula: "H_2 + Cl_2 \\rightarrow HCl", balanced: "H_2 + Cl_2 \\rightarrow 2HCl" },
+        { type: "Synthesis", word: "Silver + Sulfur → Silver Sulfide", formula: "Ag + S_8 \\rightarrow Ag_2S", balanced: "16Ag + S_8 \\rightarrow 8Ag_2S" },
+        { type: "Synthesis", word: "Sodium + Oxygen → Sodium Oxide", formula: "Na + O_2 \\rightarrow Na_2O", balanced: "4Na + O_2 \\rightarrow 2Na_2O" },
+        { type: "Synthesis", word: "Aluminum + Bromine → Aluminum Bromide", formula: "Al + Br_2 \\rightarrow AlBr_3", balanced: "2Al + 3Br_2 \\rightarrow 2AlBr_3" },
+        { type: "Synthesis", word: "Magnesium + Nitrogen → Magnesium Nitride", formula: "Mg + N_2 \\rightarrow Mg_3N_2", balanced: "3Mg + N_2 \\rightarrow Mg_3N_2" },
+
+        // DECOMPOSITION (20)
+        { type: "Decomposition", word: "Water → Hydrogen + Oxygen", formula: "H_2O \\rightarrow H_2 + O_2", balanced: "2H_2O \\rightarrow 2H_2 + O_2" },
+        { type: "Decomposition", word: "Sodium Chloride → Sodium + Chlorine", formula: "NaCl \\rightarrow Na + Cl_2", balanced: "2NaCl \\rightarrow 2Na + Cl_2" },
+        { type: "Decomposition", word: "Mercury(II) Oxide → Mercury + Oxygen", formula: "HgO \\rightarrow Hg + O_2", balanced: "2HgO \\rightarrow 2Hg + O_2" },
+        { type: "Decomposition", word: "Calcium Carbonate → Calcium Oxide + Carbon Dioxide", formula: "CaCO_3 \\rightarrow CaO + CO_2", balanced: "CaCO_3 \\rightarrow CaO + CO_2" },
+        { type: "Decomposition", word: "Potassium Chlorate → Potassium Chloride + Oxygen", formula: "KClO_3 \\rightarrow KCl + O_2", balanced: "2KClO_3 \\rightarrow 2KCl + 3O_2" },
+        { type: "Decomposition", word: "Silver Oxide → Silver + Oxygen", formula: "Ag_2O \\rightarrow Ag + O_2", balanced: "2Ag_2O \\rightarrow 4Ag + O_2" },
+        { type: "Decomposition", word: "Hydrogen Peroxide → Water + Oxygen", formula: "H_2O_2 \\rightarrow H_2O + O_2", balanced: "2H_2O_2 \\rightarrow 2H_2O + O_2" },
+        { type: "Decomposition", word: "Aluminum Oxide → Aluminum + Oxygen", formula: "Al_2O_3 \\rightarrow Al + O_2", balanced: "2Al_2O_3 \\rightarrow 4Al + 3O_2" },
+        { type: "Decomposition", word: "Magnesium Carbonate → Magnesium Oxide + Carbon Dioxide", formula: "MgCO_3 \\rightarrow MgO + CO_2", balanced: "MgCO_3 \\rightarrow MgO + CO_2" },
+        { type: "Decomposition", word: "Lead(IV) Oxide → Lead(II) Oxide + Oxygen", formula: "PbO_2 \\rightarrow PbO + O_2", balanced: "2PbO_2 \\rightarrow 2PbO + O_2" },
+        { type: "Decomposition", word: "Ammonia → Nitrogen + Hydrogen", formula: "NH_3 \\rightarrow N_2 + H_2", balanced: "2NH_3 \\rightarrow N_2 + 3H_2" },
+        { type: "Decomposition", word: "Sodium Bicarbonate → Sodium Carbonate + Water + Carbon Dioxide", formula: "NaHCO_3 \\rightarrow Na_2CO_3 + H_2O + CO_2", balanced: "2NaHCO_3 \\rightarrow Na_2CO_3 + H_2O + CO_2" },
+        { type: "Decomposition", word: "Potassium Carbonate → Potassium Oxide + Carbon Dioxide", formula: "K_2CO_3 \\rightarrow K_2O + CO_2", balanced: "K_2CO_3 \\rightarrow K_2O + CO_2" },
+        { type: "Decomposition", word: "Barium Chlorate → Barium Chloride + Oxygen", formula: "Ba(ClO_3)_2 \\rightarrow BaCl_2 + O_2", balanced: "Ba(ClO_3)_2 \\rightarrow BaCl_2 + 3O_2" },
+        { type: "Decomposition", word: "Lithium Chlorate → Lithium Chloride + Oxygen", formula: "LiClO_3 \\rightarrow LiCl + O_2", balanced: "2LiClO_3 \\rightarrow 2LiCl + 3O_2" },
+        { type: "Decomposition", word: "Copper(II) Hydroxide → Copper(II) Oxide + Water", formula: "Cu(OH)_2 \\rightarrow CuO + H_2O", balanced: "Cu(OH)_2 \\rightarrow CuO + H_2O" },
+        { type: "Decomposition", word: "Nitrogen Triiodide → Nitrogen + Iodine", formula: "NI_3 \\rightarrow N_2 + I_2", balanced: "2NI_3 \\rightarrow N_2 + 3I_2" },
+        { type: "Decomposition", word: "Dinitrogen Pentoxide → Nitrogen Dioxide + Oxygen", formula: "N_2O_5 \\rightarrow NO_2 + O_2", balanced: "2N_2O_5 \\rightarrow 4NO_2 + O_2" },
+        { type: "Decomposition", word: "Sodium Nitrate → Sodium Nitrite + Oxygen", formula: "NaNO_3 \\rightarrow NaNO_2 + O_2", balanced: "2NaNO_3 \\rightarrow 2NaNO_2 + O_2" },
+        { type: "Decomposition", word: "Zinc Carbonate → Zinc Oxide + Carbon Dioxide", formula: "ZnCO_3 \\rightarrow ZnO + CO_2", balanced: "ZnCO_3 \\rightarrow ZnO + CO_2" },
+
+        // SINGLE REPLACEMENT (20)
+        { type: "Single Replacement", word: "Zinc + Hydrochloric Acid → Zinc Chloride + Hydrogen", formula: "Zn + HCl \\rightarrow ZnCl_2 + H_2", balanced: "Zn + 2HCl \\rightarrow ZnCl_2 + H_2" },
+        { type: "Single Replacement", word: "Iron + Copper(II) Sulfate → Iron(II) Sulfate + Copper", formula: "Fe + CuSO_4 \\rightarrow FeSO_4 + Cu", balanced: "Fe + CuSO_4 \\rightarrow FeSO_4 + Cu" },
+        { type: "Single Replacement", word: "Magnesium + Silver Nitrate → Magnesium Nitrate + Silver", formula: "Mg + AgNO_3 \\rightarrow Mg(NO_3)_2 + Ag", balanced: "Mg + 2AgNO_3 \\rightarrow Mg(NO_3)_2 + 2Ag" },
+        { type: "Single Replacement", word: "Sodium + Water → Sodium Hydroxide + Hydrogen", formula: "Na + H_2O \\rightarrow NaOH + H_2", balanced: "2Na + 2H_2O \\rightarrow 2NaOH + H_2" },
+        { type: "Single Replacement", word: "Aluminum + Sulfuric Acid → Aluminum Sulfate + Hydrogen", formula: "Al + H_2SO_4 \\rightarrow Al_2(SO_4)_3 + H_2", balanced: "2Al + 3H_2SO_4 \\rightarrow Al_2(SO_4)_3 + 3H_2" },
+        { type: "Single Replacement", word: "Chlorine + Potassium Bromide → Potassium Chloride + Bromine", formula: "Cl_2 + KBr \\rightarrow KCl + Br_2", balanced: "Cl_2 + 2KBr \\rightarrow 2KCl + Br_2" },
+        { type: "Single Replacement", word: "Copper + Silver Nitrate → Copper(II) Nitrate + Silver", formula: "Cu + AgNO_3 \\rightarrow Cu(NO_3)_2 + Ag", balanced: "Cu + 2AgNO_3 \\rightarrow Cu(NO_3)_2 + 2Ag" },
+        { type: "Single Replacement", word: "Calcium + Water → Calcium Hydroxide + Hydrogen", formula: "Ca + H_2O \\rightarrow Ca(OH)_2 + H_2", balanced: "Ca + 2H_2O \\rightarrow Ca(OH)_2 + H_2" },
+        { type: "Single Replacement", word: "Potassium + Magnesium Chloride → Potassium Chloride + Magnesium", formula: "K + MgCl_2 \\rightarrow KCl + Mg", balanced: "2K + MgCl_2 \\rightarrow 2KCl + Mg" },
+        { type: "Single Replacement", word: "Fluorine + Sodium Chloride → Sodium Fluoride + Chlorine", formula: "F_2 + NaCl \\rightarrow NaF + Cl_2", balanced: "F_2 + 2NaCl \\rightarrow 2NaF + Cl_2" },
+        { type: "Single Replacement", word: "Lead + Silver Acetate → Lead(II) Acetate + Silver", formula: "Pb + AgC_2H_3O_2 \\rightarrow Pb(C_2H_3O_2)_2 + Ag", balanced: "Pb + 2AgC_2H_3O_2 \\rightarrow Pb(C_2H_3O_2)_2 + 2Ag" },
+        { type: "Single Replacement", word: "Zinc + Sulfuric Acid → Zinc Sulfate + Hydrogen", formula: "Zn + H_2SO_4 \\rightarrow ZnSO_4 + H_2", balanced: "Zn + H_2SO_4 \\rightarrow ZnSO_4 + H_2" },
+        { type: "Single Replacement", word: "Bromine + Sodium Iodide → Sodium Bromide + Iodine", formula: "Br_2 + NaI \\rightarrow NaBr + I_2", balanced: "Br_2 + 2NaI \\rightarrow 2NaBr + I_2" },
+        { type: "Single Replacement", word: "Iron + Silver Nitrate → Iron(II) Nitrate + Silver", formula: "Fe + AgNO_3 \\rightarrow Fe(NO_3)_2 + Ag", balanced: "Fe + 2AgNO_3 \\rightarrow Fe(NO_3)_2 + 2Ag" },
+        { type: "Single Replacement", word: "Aluminum + Copper(II) Chloride → Aluminum Chloride + Copper", formula: "Al + CuCl_2 \\rightarrow AlCl_3 + Cu", balanced: "2Al + 3CuCl_2 \\rightarrow 2AlCl_3 + 3Cu" },
+        { type: "Single Replacement", word: "Lithium + Water → Lithium Hydroxide + Hydrogen", formula: "Li + H_2O \\rightarrow LiOH + H_2", balanced: "2Li + 2H_2O \\rightarrow 2LiOH + H_2" },
+        { type: "Single Replacement", word: "Magnesium + Hydrochloric Acid → Magnesium Chloride + Hydrogen", formula: "Mg + HCl \\rightarrow MgCl_2 + H_2", balanced: "Mg + 2HCl \\rightarrow MgCl_2 + H_2" },
+        { type: "Single Replacement", word: "Chlorine + Sodium Iodide → Sodium Chloride + Iodine", formula: "Cl_2 + NaI \\rightarrow NaCl + I_2", balanced: "Cl_2 + 2NaI \\rightarrow 2NaCl + I_2" },
+        { type: "Single Replacement", word: "Calcium + Hydrochloric Acid → Calcium Chloride + Hydrogen", formula: "Ca + HCl \\rightarrow CaCl_2 + H_2", balanced: "Ca + 2HCl \\rightarrow CaCl_2 + H_2" },
+        { type: "Single Replacement", word: "Copper + Mercury(II) Nitrate → Copper(II) Nitrate + Mercury", formula: "Cu + Hg(NO_3)_2 \\rightarrow Cu(NO_3)_2 + Hg", balanced: "Cu + Hg(NO_3)_2 \\rightarrow Cu(NO_3)_2 + Hg" },
+
+        // DOUBLE REPLACEMENT (20)
+        { type: "Double Replacement", word: "Silver Nitrate + Sodium Chloride → Silver Chloride + Sodium Nitrate", formula: "AgNO_3 + NaCl \\rightarrow AgCl + NaNO_3", balanced: "AgNO_3 + NaCl \\rightarrow AgCl + NaNO_3" },
+        { type: "Double Replacement", word: "Barium Chloride + Sodium Sulfate → Barium Sulfate + Sodium Chloride", formula: "BaCl_2 + Na_2SO_4 \\rightarrow BaSO_4 + NaCl", balanced: "BaCl_2 + Na_2SO_4 \\rightarrow BaSO_4 + 2NaCl" },
+        { type: "Double Replacement", word: "Lead(II) Nitrate + Potassium Iodide → Lead(II) Iodide + Potassium Nitrate", formula: "Pb(NO_3)_2 + KI \\rightarrow PbI_2 + KNO_3", balanced: "Pb(NO_3)_2 + 2KI \\rightarrow PbI_2 + 2KNO_3" },
+        { type: "Double Replacement", word: "Sodium Hydroxide + Hydrochloric Acid → Sodium Chloride + Water", formula: "NaOH + HCl \\rightarrow NaCl + H_2O", balanced: "NaOH + HCl \\rightarrow NaCl + H_2O" },
+        { type: "Double Replacement", word: "Potassium Carbonate + Calcium Chloride → Calcium Carbonate + Potassium Chloride", formula: "K_2CO_3 + CaCl_2 \\rightarrow CaCO_3 + KCl", balanced: "K_2CO_3 + CaCl_2 \\rightarrow CaCO_3 + 2KCl" },
+        { type: "Double Replacement", word: "Aluminum Sulfate + Calcium Hydroxide → Aluminum Hydroxide + Calcium Sulfate", formula: "Al_2(SO_4)_3 + Ca(OH)_2 \\rightarrow Al(OH)_3 + CaSO_4", balanced: "Al_2(SO_4)_3 + 3Ca(OH)_2 \\rightarrow 2Al(OH)_3 + 3CaSO_4" },
+        { type: "Double Replacement", word: "Sodium Phosphate + Calcium Chloride → Calcium Phosphate + Sodium Chloride", formula: "Na_3PO_4 + CaCl_2 \\rightarrow Ca_3(PO_4)_2 + NaCl", balanced: "2Na_3PO_4 + 3CaCl_2 \\rightarrow Ca_3(PO_4)_2 + 6NaCl" },
+        { type: "Double Replacement", word: "Copper(II) Sulfate + Sodium Sulfide → Copper(II) Sulfide + Sodium Sulfate", formula: "CuSO_4 + Na_2S \\rightarrow CuS + Na_2SO_4", balanced: "CuSO_4 + Na_2S \\rightarrow CuS + Na_2SO_4" },
+        { type: "Double Replacement", word: "Iron(III) Chloride + Sodium Hydroxide → Iron(III) Hydroxide + Sodium Chloride", formula: "FeCl_3 + NaOH \\rightarrow Fe(OH)_3 + NaCl", balanced: "FeCl_3 + 3NaOH \\rightarrow Fe(OH)_3 + 3NaCl" },
+        { type: "Double Replacement", word: "Sulfuric Acid + Potassium Hydroxide → Potassium Sulfate + Water", formula: "H_2SO_4 + KOH \\rightarrow K_2SO_4 + H_2O", balanced: "H_2SO_4 + 2KOH \\rightarrow K_2SO_4 + 2H_2O" },
+        { type: "Double Replacement", word: "Sodium Carbonate + Hydrochloric Acid → Sodium Chloride + Water + Carbon Dioxide", formula: "Na_2CO_3 + HCl \\rightarrow NaCl + H_2O + CO_2", balanced: "Na_2CO_3 + 2HCl \\rightarrow 2NaCl + H_2O + CO_2" },
+        { type: "Double Replacement", word: "Ammonium Sulfate + Barium Nitrate → Ammonium Nitrate + Barium Sulfate", formula: "(NH_4)_2SO_4 + Ba(NO_3)_2 \\rightarrow NH_4NO_3 + BaSO_4", balanced: "(NH_4)_2SO_4 + Ba(NO_3)_2 \\rightarrow 2NH_4NO_3 + BaSO_4" },
+        { type: "Double Replacement", word: "Zinc Nitrate + Sodium Carbonate → Zinc Carbonate + Sodium Nitrate", formula: "Zn(NO_3)_2 + Na_2CO_3 \\rightarrow ZnCO_3 + NaNO_3", balanced: "Zn(NO_3)_2 + Na_2CO_3 \\rightarrow ZnCO_3 + 2NaNO_3" },
+        { type: "Double Replacement", word: "Acetic Acid + Sodium Bicarbonate → Sodium Acetate + Water + Carbon Dioxide", formula: "HC_2H_3O_2 + NaHCO_3 \\rightarrow NaC_2H_3O_2 + H_2O + CO_2", balanced: "HC_2H_3O_2 + NaHCO_3 \\rightarrow NaC_2H_3O_2 + H_2O + CO_2" },
+        { type: "Double Replacement", word: "Hydrobromic Acid + Barium Hydroxide → Barium Bromide + Water", formula: "HBr + Ba(OH)_2 \\rightarrow BaBr_2 + H_2O", balanced: "2HBr + Ba(OH)_2 \\rightarrow BaBr_2 + 2H_2O" },
+        { type: "Double Replacement", word: "Lead(II) Nitrate + Sodium Sulfate → Lead(II) Sulfate + Sodium Nitrate", formula: "Pb(NO_3)_2 + Na_2SO_4 \\rightarrow PbSO_4 + NaNO_3", balanced: "Pb(NO_3)_2 + Na_2SO_4 \\rightarrow PbSO_4 + 2NaNO_3" },
+        { type: "Double Replacement", word: "Phosphoric Acid + Magnesium Hydroxide → Magnesium Phosphate + Water", formula: "H_3PO_4 + Mg(OH)_2 \\rightarrow Mg_3(PO_4)_2 + H_2O", balanced: "2H_3PO_4 + 3Mg(OH)_2 \\rightarrow Mg_3(PO_4)_2 + 6H_2O" },
+        { type: "Double Replacement", word: "Cadmium Nitrate + Sodium Sulfide → Cadmium Sulfide + Sodium Nitrate", formula: "Cd(NO_3)_2 + Na_2S \\rightarrow CdS + NaNO_3", balanced: "Cd(NO_3)_2 + Na_2S \\rightarrow CdS + 2NaNO_3" },
+        { type: "Double Replacement", word: "Calcium Chloride + Silver Nitrate → Calcium Nitrate + Silver Chloride", formula: "CaCl_2 + AgNO_3 \\rightarrow Ca(NO_3)_2 + AgCl", balanced: "CaCl_2 + 2AgNO_3 \\rightarrow Ca(NO_3)_2 + 2AgCl" },
+        { type: "Double Replacement", word: "Nickel(II) Chloride + Potassium Hydroxide → Nickel(II) Hydroxide + Potassium Chloride", formula: "NiCl_2 + KOH \\rightarrow Ni(OH)_2 + KCl", balanced: "NiCl_2 + 2KOH \\rightarrow Ni(OH)_2 + 2KCl" },
+
+        // COMBUSTION (20)
+        { type: "Combustion", word: "Methane + Oxygen → Carbon Dioxide + Water", formula: "CH_4 + O_2 \\rightarrow CO_2 + H_2O", balanced: "CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O" },
+        { type: "Combustion", word: "Ethane + Oxygen → Carbon Dioxide + Water", formula: "C_2H_6 + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_2H_6 + 7O_2 \\rightarrow 4CO_2 + 6H_2O" },
+        { type: "Combustion", word: "Propane + Oxygen → Carbon Dioxide + Water", formula: "C_3H_8 + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_3H_8 + 5O_2 \\rightarrow 3CO_2 + 4H_2O" },
+        { type: "Combustion", word: "Butane + Oxygen → Carbon Dioxide + Water", formula: "C_4H_{10} + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_4H_{10} + 13O_2 \\rightarrow 8CO_2 + 10H_2O" },
+        { type: "Combustion", word: "Pentane + Oxygen → Carbon Dioxide + Water", formula: "C_5H_{12} + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_5H_{12} + 8O_2 \\rightarrow 5CO_2 + 6H_2O" },
+        { type: "Combustion", word: "Hexane + Oxygen → Carbon Dioxide + Water", formula: "C_6H_{14} + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_6H_{14} + 19O_2 \\rightarrow 12CO_2 + 14H_2O" },
+        { type: "Combustion", word: "Octane + Oxygen → Carbon Dioxide + Water", formula: "C_8H_{18} + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_8H_{18} + 25O_2 \\rightarrow 16CO_2 + 18H_2O" },
+        { type: "Combustion", word: "Methanol + Oxygen → Carbon Dioxide + Water", formula: "CH_3OH + O_2 \\rightarrow CO_2 + H_2O", balanced: "2CH_3OH + 3O_2 \\rightarrow 2CO_2 + 4H_2O" },
+        { type: "Combustion", word: "Ethanol + Oxygen → Carbon Dioxide + Water", formula: "C_2H_5OH + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_2H_5OH + 3O_2 \\rightarrow 2CO_2 + 3H_2O" },
+        { type: "Combustion", word: "Glucose + Oxygen → Carbon Dioxide + Water", formula: "C_6H_{12}O_6 + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_6H_{12}O_6 + 6O_2 \\rightarrow 6CO_2 + 6H_2O" },
+        { type: "Combustion", word: "Acetylene + Oxygen → Carbon Dioxide + Water", formula: "C_2H_2 + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_2H_2 + 5O_2 \\rightarrow 4CO_2 + 2H_2O" },
+        { type: "Combustion", word: "Benzene + Oxygen → Carbon Dioxide + Water", formula: "C_6H_6 + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_6H_6 + 15O_2 \\rightarrow 12CO_2 + 6H_2O" },
+        { type: "Combustion", word: "Ethene + Oxygen → Carbon Dioxide + Water", formula: "C_2H_4 + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_2H_4 + 3O_2 \\rightarrow 2CO_2 + 2H_2O" },
+        { type: "Combustion", word: "Isopropyl Alcohol + Oxygen → Carbon Dioxide + Water", formula: "C_3H_7OH + O_2 \\rightarrow CO_2 + H_2O", balanced: "2C_3H_7OH + 9O_2 \\rightarrow 6CO_2 + 8H_2O" },
+        { type: "Combustion", word: "Heptane + Oxygen → Carbon Dioxide + Water", formula: "C_7H_{16} + O_2 \\rightarrow CO_2 + H_2O", balanced: "C_7H_{16} + 11O_2 \\rightarrow 7CO_2 + 8H_2O" },
+        { type: "Combustion", word: "Magnesium + Oxygen → Magnesium Oxide", formula: "Mg + O_2 \\rightarrow MgO", balanced: "2Mg + O_2 \\rightarrow 2MgO" },
+        { type: "Combustion", word: "Sulfur + Oxygen → Sulfur Dioxide", formula: "S + O_2 \\rightarrow SO_2", balanced: "S + O_2 \\rightarrow SO_2" },
+        { type: "Combustion", word: "Carbon + Oxygen → Carbon Dioxide", formula: "C + O_2 \\rightarrow CO_2", balanced: "C + O_2 \\rightarrow CO_2" },
+        { type: "Combustion", word: "Hydrogen + Oxygen → Water", formula: "H_2 + O_2 \\rightarrow H_2O", balanced: "2H_2 + O_2 \\rightarrow 2H_2O" },
+        { type: "Combustion", word: "Iron + Oxygen → Iron(III) Oxide", formula: "Fe + O_2 \\rightarrow Fe_2O_3", balanced: "4Fe + 3O_2 \\rightarrow 2Fe_2O_3" }
+    ];
+
+    function setMode(mode, btn) {
+        currentMode = mode;
+        document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if(currentEquation) displayCurrent();
+    }
+
+    function generateNew() {
+        const randomIndex = Math.floor(Math.random() * equationBank.length);
+        currentEquation = equationBank[randomIndex];
+        document.getElementById('answer-reveal').style.display = 'none';
+        displayCurrent();
+    }
+
+    function displayCurrent() {
+        const display = document.getElementById('display-area');
+        const typeLabel = document.getElementById('reaction-type');
+        
+        typeLabel.innerText = "Type: " + currentEquation.type;
+        
+        if (currentMode === 'word') {
+            display.innerHTML = currentEquation.word;
+        } else {
+            display.innerHTML = `$$${currentEquation.formula}$$`;
+            MathJax.typeset();
+        }
+    }
+
+    function revealAnswer() {
+        if(!currentEquation) return;
+        const revealDiv = document.getElementById('answer-reveal');
+        const balancedDiv = document.getElementById('balanced-formula');
+        
+        revealDiv.style.display = 'block';
+        balancedDiv.innerHTML = `$$${currentEquation.balanced}$$`;
+        MathJax.typeset();
+    }
+
+    function togglePT(show) {
+        document.getElementById('pt-overlay').style.display = show ? 'flex' : 'none';
+    }
+</script>
+
+</body>
+</html>
