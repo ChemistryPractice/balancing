@@ -250,48 +250,43 @@
         ansBox.style.display = 'block';
         katex.render(current.b, ansText, { throwOnError: false, displayMode: true });
     }
-    function generateWorksheetDoc() {
-        // 1. Inform the user it's starting
-        const btn = document.getElementById('ws-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "Generating...";
-        btn.disabled = true;
+    async function generateWorksheetDoc() {
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbySHNogxwyG_uU1EOLtzHbJmvyvGMXr9TXVMDZPqvtGT_cSc7sAzmZOuIZpcvqE5ugwuQ/exec"; // Put your URL here!
+    
+    const btn = document.getElementById('ws-btn');
+    btn.innerText = "Generating...";
+    btn.disabled = true;
 
-        // 2. Pick 20 random unique equations from the bank
-        let selected = [];
-        let tempBank = [...bank]; // Copy the bank so we can pull items out without repeats
-        
-        for (let i = 0; i < 20; i++) {
-            if (tempBank.length === 0) break; 
-            let randomIndex = Math.floor(Math.random() * tempBank.length);
-            let item = tempBank.splice(randomIndex, 1)[0];
-            selected.push({
-                type: item.t,
-                wordEquation: item.w
-            });
-        }
-
-        // 3. Call the Google Apps Script function
-        if (typeof google !== 'undefined') {
-            google.script.run
-                .withSuccessHandler((url) => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    alert("Worksheet Created! Check your Google Drive.");
-                    window.open(url, '_blank');
-                })
-                .withFailureHandler((err) => {
-                    alert("Error: " + err);
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                })
-                .createWritingWorksheet(selected);
-        } else {
-            alert("Connection to Google Services not found. Are you running this in Apps Script?");
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+    // Pick 20 random equations
+    let selected = [];
+    let tempBank = [...bank];
+    for (let i = 0; i < 20; i++) {
+        if (tempBank.length === 0) break;
+        let randomIndex = Math.floor(Math.random() * tempBank.length);
+        selected.push(tempBank.splice(randomIndex, 1)[0]);
     }
+
+    // Use fetch to send data to Google
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors', // This is a limitation of GAS, we'll handle it below
+            body: JSON.stringify({ questions: selected })
+        });
+
+        // Because of 'no-cors', we can't easily read the response URL 
+        // unless we use a slightly more advanced setup.
+        // For now, let's alert the user to check their Google Drive!
+        alert("Worksheet request sent! Since this is coming from GitHub, check your 'Recent' files in Google Drive. It will appear there in a few seconds.");
+        
+    } catch (err) {
+        console.error(err);
+        alert("Error connecting to Google.");
+    } finally {
+        btn.innerText = "Generate Worksheet";
+        btn.disabled = false;
+    }
+}
 </script>
 
 </body>
